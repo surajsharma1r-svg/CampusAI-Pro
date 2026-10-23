@@ -1,20 +1,20 @@
 # CampusAI Pro 🎓
 
-**An AI-powered college policy assistant built with Retrieval-Augmented Generation (RAG).**
+**A Retrieval-Augmented Generation (RAG) assistant for answering college policy questions using local AI models.**
 
-CampusAI Pro helps students find answers to college policy questions using a local knowledge base, semantic search, metadata filtering, and query rewriting.
+CampusAI Pro demonstrates how a college helpdesk assistant can retrieve relevant policy information, filter results by category, rewrite user queries, and generate context-grounded answers using a locally running language model.
 
 ## 🚀 Features
 
-- **Retrieval-Augmented Generation (RAG):** Retrieves relevant college policy information before generating an answer.
-- **Semantic Search:** Uses sentence-transformer embeddings to find relevant policy content.
-- **Chroma Vector Database:** Stores and retrieves embedded policy chunks.
-- **Query Rewriting:** Converts supported natural-language questions into clearer retrieval queries.
-- **Category-Based Routing:** Routes questions to attendance, assignment, or library policies.
-- **Metadata Filtering:** Restricts retrieval to the detected policy category.
-- **Similarity Threshold:** Filters out retrieved chunks that do not meet the configured distance threshold.
-- **Fallback Handling:** Returns a fallback response when a question is unsupported or relevant evidence is unavailable.
-- **Automated Evaluation:** Tests routing, retrieval, evidence, threshold filtering, and query rewriting.
+- **RAG pipeline:** Retrieves policy evidence before generating answers.
+- **Semantic retrieval:** Uses Hugging Face sentence-transformer embeddings.
+- **Vector database:** Stores policy chunks in ChromaDB.
+- **Query rewriting:** Converts supported questions into clearer retrieval queries.
+- **Category-based routing:** Identifies attendance, assignment, or library questions.
+- **Metadata filtering:** Restricts retrieval to the selected policy category.
+- **Similarity threshold:** Rejects retrieved results that exceed the configured distance threshold.
+- **Fallback handling:** Responds when a question is unsupported or relevant evidence is unavailable.
+- **Automated evaluation:** Includes checks for routing, answer content, retrieval, evidence, thresholds, and query rewriting.
 
 ## 🛠️ Tech Stack
 
@@ -23,103 +23,126 @@ CampusAI Pro helps students find answers to college policy questions using a loc
 - ChromaDB
 - Hugging Face Sentence Transformers
 - `sentence-transformers/all-MiniLM-L6-v2`
-- Ollama with a locally running `llama3.2:3b` model
+- Ollama
+- `llama3.2:3b` local language model
 
-## 🧠 How It Works
+## 🧠 Architecture
 
-1. A student submits a question.
-2. The question router identifies the relevant policy category.
-3. Query rewriting improves supported questions for retrieval.
-4. The embedding model represents the query as a vector.
-5. Chroma searches the relevant category for policy evidence.
-6. Similarity-threshold filtering removes unsuitable results.
-7. The retrieved evidence is passed to the language model.
-8. The assistant generates an answer grounded in the retrieved policy, or returns a fallback when appropriate.
+1. Load college policy documents.
+2. Separate policy sections and attach category metadata.
+3. Split policies into chunks.
+4. Generate embeddings for policy chunks.
+5. Store the chunks in ChromaDB.
+6. Route the user's question to a policy category.
+7. Rewrite supported queries to improve retrieval.
+8. Retrieve relevant chunks using semantic search and metadata filtering.
+9. Apply the similarity-distance threshold.
+10. Pass retrieved context to the local language model.
+11. Return a grounded answer or fallback response.
 
-## 📚 Current Knowledge Base
+## 📚 Knowledge Base
 
-The current demonstration dataset contains three policy categories:
+The current demonstration dataset covers three policy categories.
 
 | Category | Example policy |
 |---|---|
-| Attendance | Minimum 75% attendance for semester examinations |
-| Assignments | Submit assignments before the announced deadline |
-| Library | Borrow up to 3 books for 14 days |
+| Attendance | At least 75% attendance is required for semester examinations. |
+| Assignments | Assignments must be submitted before the announced deadline. |
+| Library | Students can borrow up to 3 books for 14 days. |
 
-The current dataset is intentionally small and is intended for demonstrating and evaluating the RAG pipeline.
+The dataset is intentionally small. Results demonstrate the pipeline on these sample policies and should not be interpreted as a comprehensive evaluation of a real college helpdesk.
 
 ## 💬 Example
 
 **Question:** How many days can I keep library books?
 
-**Rewritten query:** How many books can a student borrow, and for how long?
+**Retrieval goal:** Find the library policy and its borrowing duration.
 
-**Retrieved evidence:** Students can borrow up to 3 books at a time for 14 days.
+**Expected policy evidence:** Students can borrow up to 3 books at a time for 14 days.
 
-**Answer:** A student can borrow up to 3 books at a time for 14 days.
+**Expected answer:** A student can borrow up to 3 books at a time for 14 days.
+
+*Actual output may vary with the current code, dataset, and local model setup.*
 
 ## 🧪 Evaluation
 
-The project includes automated checks for:
+`evaluation.py` contains checks covering:
 
 - Question category routing
 - Expected answer content
 - Category-filtered retrieval
 - Evidence presence
+- Unfiltered retrieval
 - Similarity-threshold behaviour
 - Query rewriting
 - Rewritten-query retrieval
-- End-to-end query rewriting and answer generation
+- End-to-end query rewriting and answer content
 
-Evaluation results depend on the current dataset, test cases, and local model configuration.
+Evaluation results are specific to the current sample dataset and test cases. They do not establish production-level accuracy or guarantee that hallucinations are eliminated.
 
 ## ⚙️ Setup
 
 ### Prerequisites
 
-- Python compatible with the installed project dependencies
-- Ollama installed and running
-- The `llama3.2:3b` model downloaded locally
+- Python 3.14 or another version compatible with the pinned dependencies
+- Git
+- Ollama installed
+- The `llama3.2:3b` model available locally
 
-Pull the model if it is not already available:
+Download the model:
 
 ```bash
 ollama pull llama3.2:3b
 ```
 
-### Installation
+Ensure Ollama is running before testing the language-model response path.
 
-Clone the repository and enter its directory:
+### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-cd "CampusAI Pro"
+git clone https://github.com/surajsharma1r-svg/CampusAI-Pro.git
+cd CampusAI-Pro
 ```
 
-Create and activate a virtual environment:
+### 2. Create and activate a virtual environment
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the project's dependencies:
+### 3. Install dependencies
 
 ```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Ensure Ollama is running and the required model is available before running the application or evaluations.
+### 4. Verify the local model
 
-> Note: Confirm the actual entry point and dependency file in the repository before publishing these commands.
+```bash
+ollama list
+```
+
+Confirm that `llama3.2:3b` is listed.
+
+### 5. Run the current evaluation script
+
+```bash
+python evaluation.py
+```
+
+**Implementation note:** The current scripts contain top-level initialization and evaluation code. Importing functions from `main.py` can execute that module's top-level statements again, including Chroma collection initialization and demonstration tests. Review this behaviour before using the project as a production service.
 
 ## 🔮 Future Improvements
 
-- Expand the knowledge base with more verified college policies.
-- Add more ambiguous-query and unsupported-question evaluations.
-- Improve conversation context and follow-up question handling.
-- Add a user-friendly web interface.
-- Measure retrieval quality and answer faithfulness on a larger test dataset.
+- Separate application logic from evaluation scripts.
+- Add a clean application entry point and reusable test functions.
+- Avoid resetting the Chroma collection on every application startup.
+- Expand the knowledge base with verified college policies.
+- Add ambiguous-query and unsupported-question test cases.
+- Evaluate retrieval quality and answer faithfulness on a larger dataset.
+- Add a user-friendly web interface and conversation context.
 
 ## 👨‍💻 Author
 
@@ -129,4 +152,4 @@ Aspiring AI / ML and Generative AI Engineer
 
 ---
 
-*Built as a practical learning project exploring RAG, semantic retrieval, vector databases, query rewriting, and evaluation.*
+*Built as a practical project exploring RAG, semantic retrieval, vector databases, metadata filtering, query rewriting, and evaluation.*
