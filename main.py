@@ -124,16 +124,6 @@ print("First 5 Values:", vectors[0][:5])
 # 5. CHROMA DATABASE WITH METADATA
 # ==========================================
 
-# Development only: reset old collection
-vector_store = Chroma(
-    collection_name="college_policies",
-    embedding_function=embeddings,
-    persist_directory="./chroma_db"
-)
-
-vector_store.delete_collection()
-
-# Create a clean collection
 vector_store = Chroma(
     collection_name="college_policies",
     embedding_function=embeddings,
@@ -152,6 +142,7 @@ vector_store.add_documents(
 
 print("\nChroma Database Ready!")
 print("Stored Chunks:", vector_store._collection.count())
+
 
 
 # ==========================================
@@ -192,66 +183,6 @@ Answer:
 """)
 
 chain = prompt | llm
-
-
-
-# ==========================================
-# 7. METADATA FILTERING + THRESHOLD
-# ==========================================
-
-def answer_question(question, category):
-
-    print(f"\n===== QUESTION: {question} =====")
-    print("Metadata category:", category)
-
-    # Search only in the selected category
-    scored_results = vector_store.similarity_search_with_score(
-        question,
-        k=2,
-        filter={"category": category}
-    )
-
-    print("\n===== FILTERED RETRIEVAL =====")
-
-    for i, (doc, distance) in enumerate(
-        scored_results, start=1
-    ):
-        print(f"\nResult {i} | Distance: {distance:.4f}")
-        print("Metadata:", doc.metadata)
-        print(doc.page_content)
-
-    # Apply the existing distance threshold
-    relevant_docs = [
-        doc
-        for doc, distance in scored_results
-        if distance <= SIMILARITY_THRESHOLD
-    ]
-
-    print("\nThreshold:", SIMILARITY_THRESHOLD)
-    print("Accepted chunks:", len(relevant_docs))
-
-    # Do not call the LLM if no chunks pass
-    if not relevant_docs:
-        print("\n===== CAMPUSAI PRO ANSWER =====")
-        print(FALLBACK_ANSWER)
-        return
-
-    context = "\n\n".join(
-        doc.page_content for doc in relevant_docs
-    )
-
-    response = chain.invoke({
-        "context": context,
-        "question": question
-    })
-
-    print("\n===== CAMPUSAI PRO ANSWER =====")
-    print(response.content)
-
-
-# ======================
-# Automatic Query Routing 
-# Automatically routing labels will help to gusses the automatics with examples 
 
 # ==============================
 # AUTOMATIC QUESTION ROUTING
@@ -458,61 +389,3 @@ for doc, distance in rewritten_results:
 
 
 
-# ==============================
-# QUERY REWRITING DISTANCE EVALUATION
-# ==============================
-
-from main import vector_store, rewrite_query
-
-print("\n===== QUERY REWRITING DISTANCE EVALUATION =====")
-
-original_question = "How many days can I keep library books?"
-rewritten_question = rewrite_query(original_question)
-
-original_results = vector_store.similarity_search_with_score(
-    original_question,
-    k=1,
-    filter={"category": "library"}
-)
-
-rewritten_results = vector_store.similarity_search_with_score(
-    rewritten_question,
-    k=1,
-    filter={"category": "library"}
-)
-
-original_distance = original_results[0][1]
-rewritten_distance = rewritten_results[0][1]
-
-print("Original question:", original_question)
-print("Rewritten question:", rewritten_question)
-print(f"Original distance: {original_distance:.4f}")
-print(f"Rewritten distance: {rewritten_distance:.4f}")
-
-if rewritten_distance < original_distance:
-    print("Result: PASS - Rewriting improved the distance score")
-else:
-    print("Result: CHECK - Distance did not improve")
-
-
-from main import answer_question
-
-print("\n===== QUERY REWRITING FINAL TEST =====")
-
-question = "How many days can I keep library books?"
-answer = answer_question(question)
-
-answer_text = str(answer).lower()
-
-has_book_count = "3 books" in answer_text
-has_duration = "14 days" in answer_text
-
-print("Contains 3 books:", has_book_count)
-print("Contains 14 days:", has_duration)
-
-if has_book_count and has_duration:
-    print("FINAL RESULT: PASS")
-else:
-    print("FINAL RESULT: FAIL")
-
-    
